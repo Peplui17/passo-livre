@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Passo Livre — Rotas Acessíveis</title>
+  
+  <!-- Manifesto PWA (vamos criar no futuro) -->
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- CSS do Leaflet (Mapa) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <!-- Nosso CSS -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Cabeçalho / Barra de Navegação -->
+  <header>
+    <div class="logo">
+      <h1>Passo Livre</h1>
+    </div>
+    <nav>
+      <button data-view="map" class="active">Mapa</button>
+      <button data-view="stats">Estatísticas</button>
+      <button id="authBtn">Entrar</button>
+    </nav>
+  </header>
+
+  <!-- Conteúdo Principal -->
+  <main>
+    <!-- Tela do Mapa -->
+    <section id="mapView" class="view active">
+      <div class="toolbar">
+        <button id="addReportBtn" class="action-btn">+ Reportar obstáculo</button>
+        <button id="routeBtn" class="action-btn">Traçar rota acessível</button>
+        <span id="hint" class="hint"></span>
+      </div>
+      <div id="map"></div>
+    </section>
+
+    <!-- Tela de Estatísticas -->
+    <section id="statsView" class="view">
+      <div class="stats-container">
+        <h2>Painel de Dados</h2>
+        <p>Aqui vão aparecer os gráficos e métricas da cidade.</p>
+        <!-- O conteúdo real será injetado pelo JavaScript no próximo passo -->
+        <div id="statsContent">Carregando dados...</div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal (Janela flutuante para Login e Cadastro de Reportes) -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-card">
+      <button id="closeModal" class="close-btn">×</button>
+      <div id="modalBody">
+        <!-- O conteúdo do modal será preenchido pelo JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript do Leaflet (Mapa) -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  
+  <!-- Nosso JavaScript (será criado no próximo passo) -->
+   <script src="app.js"></script>
+</body>
+</html>

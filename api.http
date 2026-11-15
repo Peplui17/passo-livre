@@ -1,0 +1,76 @@
+### 1. Testar se a API está online
+GET http://localhost:3000/api/health
+
+### 2. Cadastrar novo usuário
+POST http://localhost:3000/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Carlos Teste",
+  "email": "carlos@teste.com",
+  "password": "minhasenha123",
+  "mobility_profile": "cadeira de rodas"
+}
+
+### 3. Fazer Login com a Ana (já criada no seed)
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "ana@example.com",
+  "password": "senha123"
+}
+
+
+### Variáveis globais (Cole o token do login da Ana aqui)
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJqb2FvQGV4YW1wbGUuY29tIiwiaWF0IjoxNzk0Njk3NDQ1LCJleHAiOjE3OTUzMDIyNDV9.gszAK9Bs-1_iw8JXrpmYl16JZCJ8qoIwksEEFbhzayY
+
+### 1. Listar reportes próximos à Av. Paulista (Público)
+GET http://localhost:3000/api/reports/nearby?lat=-23.5505&lng=-46.6333&radius=5000
+
+### 2. Criar um novo reporte (Requer Token)
+POST http://localhost:3000/api/reports
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "obstacle_type": "steep_slope",
+  "severity": 4,
+  "description": "Rua com inclinação muito forte, impossível para cadeira de rodas manual.",
+  "lat": -23.5510,
+  "lng": -46.6345
+}
+
+### 3. Confirmar um reporte (Troque o "1" pelo ID de um reporte retornado no teste 1)
+POST http://localhost:3000/api/reports/1/verify
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "confirmed": true
+}
+
+### Login com o João
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "joao@example.com",
+  "password": "senha123"
+}
+
+### 4. Calcular Score de Rota (Simulando um trajeto perto da Paulista)
+POST http://localhost:3000/api/routes/score
+Content-Type: application/json
+
+{
+  "waypoints": [
+    [-23.5505, -46.6333],
+    [-23.5510, -46.6345],
+    [-23.5520, -46.6350]
+  ],
+  "mobility_profile": "wheelchair"
+}
+
+### 5. Buscar Estatísticas Gerais
+GET http://localhost:3000/api/stats

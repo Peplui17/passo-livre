@@ -1,0 +1,16 @@
+{
+  "name": "Passo Livre",
+  "short_name": "Passo Livre",
+  "description": "Rotas acessíveis colaborativas para cidades mais inclusivas.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0b5c3e",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/1006/1006771.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
