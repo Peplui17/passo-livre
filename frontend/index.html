@@ -5,9 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Passo Livre — Rotas Acessíveis</title>
   
-  <!-- Manifesto PWA (vamos criar no futuro) -->
+  <!-- Manifesto PWA -->
   <link rel="manifest" href="manifest.json" />
 
+  <!-- Fontes e Ícones (Mockup Style) -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+  
   <!-- CSS do Leaflet (Mapa) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   
@@ -16,55 +20,64 @@
 </head>
 <body>
 
-  <!-- Cabeçalho / Barra de Navegação -->
-  <header>
-    <div class="logo">
+  <div class="app-container">
+    
+    <!-- Top Bar -->
+    <header class="top-bar">
       <h1>Passo Livre</h1>
-    </div>
-    <nav>
-      <button data-view="map" class="active">Mapa</button>
-      <button data-view="stats">Estatísticas</button>
-      <button id="authBtn">Entrar</button>
+      <button id="authBtn" class="btn-outline">Entrar</button>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    <main>
+      <!-- Tela do Mapa -->
+      <section id="mapView" class="view active">
+        <div class="toolbar">
+          <button id="addReportBtn" class="pill-btn">
+            <span class="material-icons-round">add_location_alt</span> Reportar
+          </button>
+          <button id="routeBtn" class="pill-btn">
+            <span class="material-icons-round">route</span> Rota
+          </button>
+        </div>
+        <div id="hint" class="hint"></div>
+        <div id="map"></div>
+      </section>
+
+      <!-- Tela de Estatísticas -->
+      <section id="statsView" class="view bg-grey">
+        <div class="stats-container">
+          <h2>Painel de Dados</h2>
+          <div id="statsContent">Carregando dados...</div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Navegação Inferior (Bottom Nav) -->
+    <nav class="bottom-nav">
+      <button data-view="map" class="active">
+        <span class="material-icons-round">map</span>
+        <span>Mapa</span>
+      </button>
+      <button data-view="stats">
+        <span class="material-icons-round">bar_chart</span>
+        <span>Estatísticas</span>
+      </button>
     </nav>
-  </header>
 
-  <!-- Conteúdo Principal -->
-  <main>
-    <!-- Tela do Mapa -->
-    <section id="mapView" class="view active">
-      <div class="toolbar">
-        <button id="addReportBtn" class="action-btn">+ Reportar obstáculo</button>
-        <button id="routeBtn" class="action-btn">Traçar rota acessível</button>
-        <span id="hint" class="hint"></span>
-      </div>
-      <div id="map"></div>
-    </section>
-
-    <!-- Tela de Estatísticas -->
-    <section id="statsView" class="view">
-      <div class="stats-container">
-        <h2>Painel de Dados</h2>
-        <p>Aqui vão aparecer os gráficos e métricas da cidade.</p>
-        <!-- O conteúdo real será injetado pelo JavaScript no próximo passo -->
-        <div id="statsContent">Carregando dados...</div>
-      </div>
-    </section>
-  </main>
-
-  <!-- Modal (Janela flutuante para Login e Cadastro de Reportes) -->
-  <div id="modal" class="modal hidden">
-    <div class="modal-card">
-      <button id="closeModal" class="close-btn">×</button>
-      <div id="modalBody">
-        <!-- O conteúdo do modal será preenchido pelo JS -->
+    <!-- Modal Centralizado -->
+    <div id="modal" class="modal hidden">
+      <div class="modal-card">
+        <button id="closeModal" class="close-btn">×</button>
+        <div id="modalBody">
+          <!-- O conteúdo será injetado pelo JS -->
+        </div>
       </div>
     </div>
+
   </div>
 
-  <!-- JavaScript do Leaflet (Mapa) -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  
-  <!-- Nosso JavaScript (será criado no próximo passo) -->
-   <script src="app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

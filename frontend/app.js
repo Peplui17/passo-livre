@@ -4,14 +4,15 @@ let map;
 let markers = [];
 let token = localStorage.getItem('token') || null;
 let user = JSON.parse(localStorage.getItem('user') || 'null');
-let mode = null; // Pode ser 'report' ou 'route'
-let routePoints = []; // Armazena os cliques para traçar rota
+let mode = null; 
+let routePoints = []; 
+let selectedSeverity = 3; // Variável para o seletor visual
 
 const el = (id) => document.getElementById(id);
 const modal = el('modal'), modalBody = el('modalBody');
 
 // ==========================================
-// FUNÇÕES AUXILIARES (MODAL E AUTH)
+// FUNÇÕES AUXILIARES
 // ==========================================
 function openModal(html) {
   modalBody.innerHTML = html;
@@ -72,7 +73,7 @@ el('authBtn').onclick = () => {
 
   openModal(`
     <h3>Entrar / Cadastrar</h3>
-    <label>Nome (apenas para cadastro)</label><input id="fName" />
+    <label>Nome (apenas cadastro)</label><input id="fName" />
     <label>E-mail</label><input id="fEmail" type="email" />
     <label>Senha</label><input id="fPass" type="password" />
     <label>Perfil de mobilidade</label>
@@ -116,7 +117,8 @@ el('authBtn').onclick = () => {
 const colors = { 1: '#2e7d32', 2: '#7cb342', 3: '#f9a825', 4: '#ef6c00', 5: '#c62828' };
 
 function initMap() {
-  map = L.map('map').setView([-23.5505, -46.6333], 15);
+  map = L.map('map', { zoomControl: false }).setView([-23.5505, -46.6333], 15);
+  // Tiles mais limpos (estilo do mockup)
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap'
   }).addTo(map);
@@ -140,15 +142,17 @@ async function loadReports() {
   markers = list.map(rep => {
     const color = colors[rep.severity] || '#666';
     const marker = L.circleMarker([rep.lat, rep.lng], {
-      radius: 8, color: '#fff', weight: 1, fillColor: color, fillOpacity: 0.9
+      radius: 8, color: '#fff', weight: 2, fillColor: color, fillOpacity: 1
     }).addTo(map);
 
     marker.bindPopup(`
-      <strong>${rep.obstacle_type}</strong><br/>
-      Severidade: ${rep.severity}/5 · Status: ${rep.status}<br/>
-      ${rep.description || ''}<br/><br/>
-      <button onclick="verifyReport(${rep.id}, true)" style="cursor:pointer; background:#0b5c3e; color:#fff; border:none; padding:4px 8px; border-radius:4px;">Confirmar</button>
-      <button onclick="verifyReport(${rep.id}, false)" style="cursor:pointer; background:#c62828; color:#fff; border:none; padding:4px 8px; border-radius:4px; margin-left:4px;">Contestar</button>
+      <div style="font-family: 'Inter', sans-serif;">
+        <strong style="font-size:1.1rem; color:#333;">${rep.obstacle_type}</strong><br/>
+        <span style="color:#666; font-size:0.85rem;">Severidade: ${rep.severity}/5 · ${rep.status}</span><br/><br/>
+        <p style="margin:0 0 10px 0; font-size:0.9rem;">${rep.description || 'Sem descrição.'}</p>
+        <button onclick="verifyReport(${rep.id}, true)" style="cursor:pointer; background:#0b5c3e; color:#fff; border:none; padding:6px 12px; border-radius:6px; font-weight:600;">Confirmar</button>
+        <button onclick="verifyReport(${rep.id}, false)" style="cursor:pointer; background:#fff; color:#c62828; border:1px solid #c62828; padding:6px 12px; border-radius:6px; font-weight:600; margin-left:4px;">Contestar</button>
+      </div>
     `);
     return marker;
   });
@@ -173,7 +177,7 @@ async function verifyReport(id, confirmed) {
 window.verifyReport = verifyReport;
 
 // ==========================================
-// AÇÕES DO TOOLBAR (REPORTAR E ROTEAR)
+// AÇÕES DO TOOLBAR
 // ==========================================
 el('addReportBtn').onclick = () => {
   if (!token) return alert('Faça login para reportar.');
@@ -189,6 +193,8 @@ el('routeBtn').onclick = () => {
 function onMapClick(e) {
   if (mode === 'report') {
     const { lat, lng } = e.latlng;
+    selectedSeverity = 3;
+    
     openModal(`
       <h3>Novo reporte</h3>
       <label>Tipo de obstáculo</label>
@@ -200,20 +206,37 @@ function onMapClick(e) {
         <option value="obstruction">Obstrução</option>
         <option value="steep_slope">Inclinação acentuada</option>
       </select>
-      <label>Severidade (1 a 5)</label>
-      <input id="rSev" type="number" min="1" max="5" value="3" />
+      
+      <label>Severidade</label>
+      <div class="severity-container" id="sevBox">
+        <button class="severity-btn" data-val="1">1</button>
+        <button class="severity-btn" data-val="2">2</button>
+        <button class="severity-btn active" data-val="3">3</button>
+        <button class="severity-btn" data-val="4">4</button>
+        <button class="severity-btn" data-val="5">5</button>
+      </div>
+
       <label>Descrição</label>
       <textarea id="rDesc" rows="3" placeholder="Descreva o problema..."></textarea>
       <button class="primary" id="saveReport">Salvar Reporte</button>
     `);
     
+    // Lógica dos botões de severidade visual
+    document.querySelectorAll('.severity-btn').forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll('.severity-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedSeverity = Number(btn.dataset.val);
+      };
+    });
+
     el('saveReport').onclick = async () => {
       const r = await fetch(`${API}/reports`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({
           obstacle_type: el('rType').value,
-          severity: Number(el('rSev').value),
+          severity: selectedSeverity,
           description: el('rDesc').value,
           lat, lng
         })
@@ -239,12 +262,11 @@ function onMapClick(e) {
 }
 
 // ==========================================
-// CÁLCULO DE ROTA (Integração com OSRM e API de Score)
+// CÁLCULO DE ROTA E SCORE (Estilo Mockup 3)
 // ==========================================
 async function calculateRoute(a, b) {
-  openModal('<h3>Calculando rota...</h3><p>Aguarde...</p>');
+  openModal('<h3 style="text-align:center;">Calculando rota...</h3><p style="text-align:center; color:#666;">Aguarde...</p>');
   
-  // 1. Pega a geometria da rota no OSRM (Servidor público de rotas)
   const url = `https://router.project-osrm.org/route/v1/driving/${a[1]},${a[0]};${b[1]},${b[0]}?overview=full&geometries=geojson`;
   const osrm = await fetch(url).then(r => r.json()).catch(() => null);
   
@@ -253,12 +275,10 @@ async function calculateRoute(a, b) {
     coords = osrm.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
   }
 
-  // Desenha a linha no mapa
   if (window.routeLayer) map.removeLayer(window.routeLayer);
   window.routeLayer = L.polyline(coords, { color: '#0b5c3e', weight: 5 }).addTo(map);
   map.fitBounds(window.routeLayer.getBounds(), { padding: [20, 20] });
 
-  // 2. Envia para a nossa API calcular o Score de Acessibilidade
   const profile = user?.mobility_profile || 'general';
   const r = await fetch(`${API}/routes/score`, {
     method: 'POST',
@@ -267,29 +287,43 @@ async function calculateRoute(a, b) {
   });
   const data = await r.json();
 
-  // 3. Mostra o resultado no Modal
-  const cls = data.score >= 75 ? '#2e7d32' : data.score >= 45 ? '#f9a825' : '#c62828';
+  const scoreColor = data.score >= 75 ? '#2e7d32' : data.score >= 45 ? '#f9a825' : '#c62828';
+  
   openModal(`
-    <h3>Resultado da Rota</h3>
-    <div style="background:${cls}; color:#fff; padding:10px; border-radius:8px; text-align:center; margin-bottom:15px;">
-      <h2 style="margin:0;">Score: ${data.score}/100</h2>
-      <p style="margin:5px 0 0;">${data.message}</p>
+    <h3 style="text-align:center; margin-bottom:0;">Resultado da rota</h3>
+    <div class="score-ring-container">
+      <div class="score-ring" style="background: conic-gradient(${scoreColor} ${data.score}%, #eee 0);">
+        <div class="score-text">
+          <h2>${data.score}</h2>
+          <p>/100</p>
+        </div>
+      </div>
     </div>
-    <p><strong>Distância:</strong> ${(data.distance_m / 1000).toFixed(2)} km</p>
-    <p><strong>Obstáculos no caminho:</strong> ${data.reports_nearby.length}</p>
-    <ul>
-      ${data.reports_nearby.slice(0, 5).map(o => `<li>${o.obstacle_type} (Sev. ${o.severity})</li>`).join('')}
-    </ul>
+    <p style="text-align:center; color:${scoreColor}; font-weight:600; margin-bottom:20px;">${data.message}</p>
+    
+    <div style="display:flex; gap:10px; margin-bottom: 20px;">
+      <div class="stat-box" style="flex:1; padding:12px;"><h4>${(data.distance_m / 1000).toFixed(2)}km</h4><p>Distância</p></div>
+      <div class="stat-box" style="flex:1; padding:12px;"><h4>${data.reports_nearby.length}</h4><p>Obstáculos</p></div>
+    </div>
+
+    <div style="background:#f8f9fa; padding:16px; border-radius:12px; margin-bottom:20px;">
+      <h4 style="font-size:0.8rem; color:#666; margin-bottom:10px; text-transform:uppercase;">Obstáculos no trajeto</h4>
+      <ul style="padding-left:20px; color:#333; font-size:0.9rem;">
+        ${data.reports_nearby.slice(0, 5).map(o => `<li style="margin-bottom:4px;">${o.obstacle_type} <span style="color:#c62828;">(Sev. ${o.severity})</span></li>`).join('')}
+        ${data.reports_nearby.length === 0 ? '<li>Nenhum obstáculo encontrado!</li>' : ''}
+      </ul>
+    </div>
+
     <button class="primary" onclick="document.getElementById('closeModal').click()">Fechar</button>
   `);
 }
 
 // ==========================================
-// NAVEGAÇÃO E ESTATÍSTICAS
+// NAVEGAÇÃO E ESTATÍSTICAS (Estilo Mockup 4)
 // ==========================================
-document.querySelectorAll('nav [data-view]').forEach(btn => {
+document.querySelectorAll('.bottom-nav [data-view]').forEach(btn => {
   btn.onclick = () => {
-    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.bottom-nav button').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     
     btn.classList.add('active');
@@ -305,30 +339,39 @@ async function loadStats() {
   const r = await fetch(`${API}/stats`);
   const d = await r.json();
   
+  // Função que gera as barras coloridas do mockup
+  const makeBar = (label, count, max, color) => `
+    <div class="bar-row">
+      <div class="bar-label">${label.replace('_', ' ')}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(count/max)*100}%; background:${color};"></div></div>
+      <div class="bar-value">${count}</div>
+    </div>
+  `;
+
+  const maxType = Math.max(...d.byType.map(x => x.count), 1);
+  const maxSev = Math.max(...d.bySeverity.map(x => x.count), 1);
+  
   el('statsContent').innerHTML = `
-    <div style="background:#e8f5e9; padding:15px; border-radius:8px; margin-bottom:20px;">
-      <p style="margin:0; font-size:1.1rem;">
-        <strong>Total de reportes:</strong> ${d.totals.total_reports} <br/>
-        <strong>Usuários ativos:</strong> ${d.totals.active_users} <br/>
-        <strong>Severidade média:</strong> ${d.totals.avg_severity || 0}
-      </p>
+    <div class="stats-grid">
+      <div class="stat-box"><h4>${d.totals.total_reports}</h4><p>Reportes</p></div>
+      <div class="stat-box"><h4>${d.totals.active_users}</h4><p>Usuários</p></div>
+      <div class="stat-box"><h4>${d.totals.avg_severity || 0}</h4><p>Sev. Média</p></div>
     </div>
 
-    <h3>Obstáculos por Tipo</h3>
-    <table style="width:100%; border-collapse:collapse; margin-bottom:20px; text-align:left;">
-      <tr style="background:#0b5c3e; color:#fff;">
-        <th style="padding:8px;">Tipo</th><th style="padding:8px;">Qtd</th><th style="padding:8px;">Sev. Média</th>
-      </tr>
-      ${d.byType.map(x => `<tr style="border-bottom:1px solid #ddd;"><td style="padding:8px;">${x.obstacle_type}</td><td style="padding:8px;">${x.count}</td><td style="padding:8px;">${x.avg_severity}</td></tr>`).join('')}
-    </table>
+    <div class="stats-card">
+      <h4 style="margin-bottom:16px; font-size:0.85rem; color:#666; text-transform:uppercase;">Por Tipo de Obstáculo</h4>
+      ${d.byType.map(x => makeBar(x.obstacle_type, x.count, maxType, '#0b5c3e')).join('')}
+    </div>
 
-    <h3>Status dos Reportes</h3>
-    <table style="width:100%; border-collapse:collapse; margin-bottom:20px; text-align:left;">
-      <tr style="background:#0b5c3e; color:#fff;">
-        <th style="padding:8px;">Status</th><th style="padding:8px;">Qtd</th>
-      </tr>
-      ${d.byStatus.map(x => `<tr style="border-bottom:1px solid #ddd;"><td style="padding:8px;">${x.status}</td><td style="padding:8px;">${x.count}</td></tr>`).join('')}
-    </table>
+    <div class="stats-card">
+      <h4 style="margin-bottom:16px; font-size:0.85rem; color:#666; text-transform:uppercase;">Por Severidade</h4>
+      ${d.bySeverity.map(x => makeBar(`Nível ${x.severity}`, x.count, maxSev, colors[x.severity])).join('')}
+    </div>
+
+    <div class="stats-card">
+      <h4 style="margin-bottom:16px; font-size:0.85rem; color:#666; text-transform:uppercase;">Status dos Reportes</h4>
+      ${d.byStatus.map(x => makeBar(x.status, x.count, d.totals.total_reports, '#666')).join('')}
+    </div>
   `;
 }
 
@@ -339,9 +382,8 @@ initMap();
 renderAuthButton();
 updateHint();
 
-// Registro do Service Worker (PWA)
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch((err) => {
-    console.log('Service Worker falhou (normal se estiver em file://)', err);
+    console.log('Service Worker falhou', err);
   });
 }
