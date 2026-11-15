@@ -71,7 +71,7 @@ docker run --name passo-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=passoliv
 ### 2. Configurar o Backend
 ```bash
 # Clone o repositório
-git clone https://github.com/seu-usuario/passo-livre.git
+git clone https://github.com/Peplui17/passo-livre.git
 cd passo-livre/backend
 
 # Instale as dependências
